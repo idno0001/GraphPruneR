@@ -1,5 +1,6 @@
 ## An R implementation of Navid Dianati's MLF algorithm
 library(igraph)
+library(data.table)
 
 # find or generate da standard hairball to prune
 
@@ -42,7 +43,7 @@ prune <- function(G, df, pct = NULL, num_remove = NULL) {
   if (!is.null(pct)) {
     deathrow <- c()
     n <- ecount(G)
-    threshold_index <- n - n*pct/100
+    threshold_index <- n - n * pct / 100
     threshold_value <- sort(E(G)$significance)[threshold_index]
     idx <- E(G)$significance <= threshold_value
     G <- delete.edges(G, which(idx))
@@ -70,27 +71,24 @@ compute_sig <- function(G) {
   # unimplemented?
 }
 
-
 .compute_sig_undirected <- function(G) {
+  G <- rg ##
   ks <- graph.strength(G) # weights used by default
   total_degree <- sum(ks)
-  sig <- c()
-  for (e in seq_len(ecount(G))) {
-    i0 <- ends(G, E(G)[e])[1] # fix this: e should be the Eth edge
-    i1 <- ends(G, E(G)[e])[2] # fix this: e should be the Eth edge
-    v0 <- V(G)[i0]
-    v1 <- V(G)[i1]
-    
-    p <- pval(params = c(E(G)$weight[e], ks[i0], ks[i1], total_degree/2)) #resume testing here
-    sig[e] <- -log(p$estimate)
-  }
-  E(G)$significance <- sig
+  
+  all_ends <- as.data.table(ends(G, E(G)))
+  strengths <- all_ends[, .(weight = E(G)$weight,
+                            s1 = ks[V1],
+                            s2 = ks[V2],
+                            norm_factor = total_degree / 2)]
+  strengths[, I := .I
+            ][, pval := pval(params = c(weight, s1, s2, norm_factor)), by = I
+              ][, minus_log_p := -log(pval)]
+  
+  E(G)$significance <- strengths[, minus_log_p]
+  
   max_sig <- max(E(G)$significance)
-  for (e in seq_len(ecount(G))) {
-    if (is.na(E(G)$significance[e])) { # is na the right test here?
-       E(G)$significance[e] <- max_sig
-    }
-  }
+  E(G)$significance[is.null(E(G)$significance)] <- max_sig
   G
 }
 
