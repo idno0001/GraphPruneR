@@ -5,15 +5,15 @@ library(igraph)
 
 pval <- function(mode = "undirected", params) {
   if (mode == "undirected") {
-    pval_undirected(params)
+    .pval_undirected(params)
   } else if (mode == "directed") {
-    pval_directed(params)
+    .pval_directed(params)
   } else {
     stop("Mode must be either 'directed' or 'undirected'")
   }
 }
 
-pval_undirected <- function(params) {
+.pval_undirected <- function(params) {
   
   w <- params[1]
   ku <- params[2]
@@ -25,7 +25,7 @@ pval_undirected <- function(params) {
   binom.test(x = w, n = q, p = p, alternative = "greater")[5] #why does W have to be integer?
 }
 
-pval_directed <- function(params) {
+.pval_directed <- function(params) {
   
   w <- params[1]
   ku_out <- params[2]
@@ -60,18 +60,18 @@ prune <- function(G, df, pct = NULL, num_remove = NULL) {
 
 compute_sig <- function(G) {
   if (is_directed(G)) {
-    compute_sig_directed(G)
+    .compute_sig_directed(G)
   } else {
-    compute_sig_dunirected(G)
+    compute_sig_undirected(G)
   }
 }
 
-compute_sig_directed <- function(G) {
+.compute_sig_directed <- function(G) {
   # unimplemented?
 }
 
 
-compute_sig_undirected <- function(G) {
+.compute_sig_undirected <- function(G) {
   ks <- graph.strength(G) # weights used by default
   total_degree <- sum(ks)
   sig <- c()
@@ -101,6 +101,6 @@ V(rg)$size <- 3
 plot(rg)
 E(rg)$weight <- sample(seq_len(20), length(E(rg)), replace = T)
 
-test <- compute_sig_undirected(rg) #works!
+test <- compute_sig(rg) #works!
 test2 <- prune(test, pct = 30)
 
