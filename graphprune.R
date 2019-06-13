@@ -51,7 +51,7 @@ prune = function(G, df, pct = NULL, num_remove=NULL){
     n = ecount(G)
     ind = sort(E(G)$significance,partial=(num_remove))[num_remove]
     idx = which(E(G)$significance <= ind)
-    G = delete_edges(G, which(idx))
+    G = delete_edges(G, idx)
     return(G)# fix all this stuff
   } else {
     stop("Something went wrong")
@@ -73,11 +73,11 @@ compute_sig_directed = function(G){
 
 compute_sig_undirected = function(G){
   ks = graph.strength(G) # weights used by default
-  total_degree = sum(degree(rg))
+  total_degree = sum(ks)
   sig = c()
   for(e in 1:ecount(G)){
-    i0 = get.edge(G, E(G)[e])[1] # fix this: e should be the Eth edge
-    i1 = get.edge(G, E(G)[e])[2] # fix this: e should be the Eth edge
+    i0 = ends(G, E(G)[e])[1] # fix this: e should be the Eth edge
+    i1 = ends(G, E(G)[e])[2] # fix this: e should be the Eth edge
     v0 = V(G)[i0]
     v1 = V(G)[i1]
     
@@ -102,4 +102,5 @@ plot(rg)
 E(rg)$weight = sample(1:20, length(E(rg)), replace=T)
 
 test = compute_sig_undirected(rg) #works!
-test2 = prune(test)
+test2 = prune(test, pct = 30)
+
